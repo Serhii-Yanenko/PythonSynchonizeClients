@@ -8,7 +8,11 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     """
-    _bIsFirstClientDone = False
+    _bIsClient1Step1IsDone = False
+    _bIsClient2Step1IsDone =False
+    _bIsClient1Step2IsDone = False
+    _bIsClient2Step2IsDone = False
+
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
@@ -16,20 +20,42 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         print(self.data)
         # just send back the same data, but upper-cased
         #self.request.sendall(self.data.upper())
-        print(MyTCPHandler._bIsFirstClientDone)
         if(str(self.data).find("client 1")!=-1):
-            self.request.sendall(b'do step 1')
-            data = self.request.recv(1024).strip()
-            if(str(data).find("done")!=-1):
-                MyTCPHandler._bIsFirstClientDone = True
-                print("1st client is done!")
-        elif( str(self.data).find("client 2")!=-1):
-            if(MyTCPHandler._bIsFirstClientDone == True):
-                self.request.sendall(b'do step 2')
+            if(MyTCPHandler._bIsClient1Step1IsDone == True):
+                print("wait until step 2 is implemented by client 2")
+                if(MyTCPHandler._bIsClient2Step1IsDone == False):
+                    print("wait until step 1 is implemented by client 2")
+                    self.request.sendall(b'wait')
+                else:
+                    self.request.sendall(b'do step 3')
+                    data = self.request.recv(1024).strip()
+                    if(str(data).find("step 2 is done")!=-1):
+                        MyTCPHandler._bIsClient1Step2IsDone = True
+                        print("1st client is done!")
+
+            else:
+                self.request.sendall(b'do step 1')
                 data = self.request.recv(1024).strip()
-                if(str(data).find("done")!=-1):
-                    print("Finished!")
-                    MyTCPHandler._bIsFirstClientDone = False
+                if(str(data).find("step 1 is done")!=-1):
+                    MyTCPHandler._bIsClient1Step1IsDone = True
+                    print("1st client is done!")
+        elif( str(self.data).find("client 2")!=-1):
+            if(MyTCPHandler._bIsClient1Step1IsDone == True):
+                if(MyTCPHandler._bIsClient1Step2IsDone == False):
+                    self.request.sendall(b'do step 2')
+                    data = self.request.recv(1024).strip()
+                    if(str(data).find("step 2 done")!=-1):
+                        print("Finished 1st round!")
+                        MyTCPHandler._bIsClient2Step1IsDone = True
+                else:
+                    self.request.sendall(b'do step 4')
+                    data = self.request.recv(1024).strip()
+                    if(str(data).find('done')!=-1):
+                        print("Finished 4th script")
+                    else:
+                        self.request.sendall(b'wait')
+                        print("wait for client 1 step 3 complete")
+
             else:
                 self.request.sendall(b'wait')
                 print("wait for client 1 complete")
