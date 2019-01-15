@@ -12,6 +12,11 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
     _bIsClient2Step1IsDone =False
     _bIsClient1Step2IsDone = False
     _bIsClient2Step2IsDone = False
+    def print_parameters(self):
+        print(self._bIsClient1Step1IsDone)
+        print(self._bIsClient1Step2IsDone)
+        print(self._bIsClient2Step1IsDone)
+        print(self._bIsClient2Step2IsDone)
 
     def handle(self):
         # self.request is the TCP socket connected to the client
@@ -20,6 +25,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
         print(self.data)
         # just send back the same data, but upper-cased
         #self.request.sendall(self.data.upper())
+        self.print_parameters()
         if(str(self.data).find("client 1")!=-1):
             if(MyTCPHandler._bIsClient1Step1IsDone == True):
                 print("wait until step 2 is implemented by client 2")
@@ -29,7 +35,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                 else:
                     self.request.sendall(b'do step 3')
                     data = self.request.recv(1024).strip()
-                    if(str(data).find("step 2 is done")!=-1):
+                    if(str(data).find("step 3 done")!=-1):
                         MyTCPHandler._bIsClient1Step2IsDone = True
                         print("1st client is done!")
 
@@ -52,8 +58,17 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                     data = self.request.recv(1024).strip()
                     if(str(data).find('done')!=-1):
                         print("Finished 4th script")
+                        self._bIsClient1Step1IsDone = False
+                        self._bIsClient1Step2IsDone = False
+                        self._bIsClient2Step1IsDone = False
+                        self._bIsClient2Step2IsDone = False
+                        self.print_parameters()
                     else:
                         self.request.sendall(b'wait')
+                        self._bIsClient1Step1IsDone = False
+                        self._bIsClient1Step2IsDone = False
+                        self._bIsClient2Step1IsDone = False
+                        self._bIsClient2Step2IsDone = False
                         print("wait for client 1 step 3 complete")
 
             else:

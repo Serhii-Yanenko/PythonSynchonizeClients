@@ -44,7 +44,7 @@ def main():
     bIsDone = False
     while(bIsDone == False):
         bIsDone = client2(4)
-        #time.sleep(1)
+        time.sleep(2)
      
     print("done!")
 
